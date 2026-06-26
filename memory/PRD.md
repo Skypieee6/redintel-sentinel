@@ -35,6 +35,21 @@ Endpoints: `/health`, `/ready`, `/version`.
 Verification: `go vet` + `gofmt` clean; `go test ./...` green (incl. integration
 against live Postgres+Redis); live curl smoke tests for login/org/project/invite/audit/docs.
 
+### Phase 5–7 — Asset Inventory, Dashboard & Reporting (2026-06-26)
+- Assets: unified `assets` table (domain, subdomain, ip, cidr, asn, dns_record,
+  certificate, technology) with JSONB attributes + `text[]` tags. Full CRUD,
+  tagging, ILIKE search, type/tag/status filtering and paginated listing
+  (returns total). Project-scoped access control (analyst+ to write).
+- Project archive/unarchive endpoints.
+- Dashboard: total assets, assets-by-type, recent changes, project statistics
+  (active/archived + per-project asset counts) and team statistics.
+- Reporting: asset-inventory export in JSON, CSV, Markdown and HTML (downloadable).
+- OpenAPI updated; unit tests for all report formats; integration test covering
+  the full workflow: register → login → org → project → add assets → inventory
+  search → dashboard → all 4 report formats → archive. All green.
+- Verified live end-to-end via curl (3 assets across types, search, dashboard
+  breakdown, all report content-types).
+
 ## Backlog (next phases)
 - P1: Asset inventory CRUD; passive asset discovery; HTTP fingerprinting (defensive).
 - P1: Email delivery for invitations/resets (currently logged); golangci-lint in CI; rate limiting.
