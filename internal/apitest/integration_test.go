@@ -174,6 +174,82 @@ func TestCorePlatformFlow(t *testing.T) {
 	}
 }
 
+func TestEndToEndAsmWorkflow(t *testing.T) {
+	engine := setup(t)
+	c := &apiClient{t: t, engine: engine}
+	email := fmt.Sprintf("asm_%d@test.local", time.Now().UnixNano())
+
+	// Register -> Login (via register tokens)
+	code, body := c.do(http.MethodPost, "/api/v1/auth/register", map[string]any{
+		"email": email, "password": "supersecret", "full_name": "ASM User",
+	}, nil)
+	if code != http.StatusCreated {
+		t.Fatalf("register: %d %v", code, body)
+	}
+	c.token = data(body)["tokens"].(map[string]any)["access_token"].(string)
+
+	// Create organization
+	code, body = c.do(http.MethodPost, "/api/v1/orgs", map[string]any{"name": "ASM Org"}, nil)
+	if code != http.StatusCreated {
+		t.Fatalf("create org: %d %v", code, body)
+	}
+	orgID := data(body)["id"].(string)
+
+	// Create project
+	code, body = c.do(http.MethodPost, "/api/v1/orgs/"+orgID+"/projects", map[string]any{"name": "Perimeter"}, nil)
+	if code != http.StatusCreated {
+		t.Fatalf("create project: %d %v", code, body)
+	}
+	projectID := data(body)["id"].(string)
+
+	// Add a domain asset
+	base := "/api/v1/orgs/" + orgID + "/projects/" + projectID
+	code, body = c.do(http.MethodPost, base+"/assets", map[string]any{
+		"type": "domain", "value": "example.com", "tags": []string{"prod", "external"},
+		"attributes": map[string]any{"registrar": "ExampleRegistrar"},
+	}, nil)
+	if code != http.StatusCreated {
+		t.Fatalf("create asset: %d %v", code, body)
+	}
+
+	// Invalid asset type rejected
+	if code, _ := c.do(http.MethodPost, base+"/assets", map[string]any{"type": "banana", "value": "x"}, nil); code != http.StatusBadRequest {
+		t.Fatalf("invalid asset type status = %d, want 400", code)
+	}
+
+	// View asset inventory (search + pagination)
+	code, body = c.do(http.MethodGet, base+"/assets?type=domain&q=example&limit=10", nil, nil)
+	if code != http.StatusOK {
+		t.Fatalf("list assets: %d", code)
+	}
+	page := data(body)
+	if int(page["total"].(float64)) < 1 {
+		t.Fatalf("expected at least one asset in inventory, got %v", page["total"])
+	}
+
+	// Dashboard
+	code, body = c.do(http.MethodGet, "/api/v1/orgs/"+orgID+"/dashboard", nil, nil)
+	if code != http.StatusOK {
+		t.Fatalf("dashboard: %d %v", code, body)
+	}
+	if int(data(body)["total_assets"].(float64)) < 1 {
+		t.Fatal("dashboard total_assets should be >= 1")
+	}
+
+	// Generate reports in every format
+	for _, f := range []string{"json", "csv", "markdown", "html"} {
+		code, _ := c.do(http.MethodGet, base+"/report?format="+f, nil, nil)
+		if code != http.StatusOK {
+			t.Fatalf("report %s status = %d", f, code)
+		}
+	}
+
+	// Archive project
+	if code, _ := c.do(http.MethodPost, base+"/archive", nil, nil); code != http.StatusOK {
+		t.Fatalf("archive project status = %d", code)
+	}
+}
+
 func TestUnauthenticatedRejected(t *testing.T) {
 	engine := setup(t)
 	c := &apiClient{t: t, engine: engine}
