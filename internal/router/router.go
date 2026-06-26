@@ -1,21 +1,57 @@
+// Package router wires HTTP routes onto a Gin engine.
 package router
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
-// New returns the base HTTP router.
-func New() *http.ServeMux {
-	mux := http.NewServeMux()
+	"github.com/Skypieee6/redintel-sentinel/internal/cache"
+	"github.com/Skypieee6/redintel-sentinel/internal/config"
+	"github.com/Skypieee6/redintel-sentinel/internal/database"
+	"github.com/Skypieee6/redintel-sentinel/internal/handlers"
+	"github.com/Skypieee6/redintel-sentinel/internal/middleware"
+)
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte("{\"status\":\"ok\"}"))
-	})
+// Dependencies bundles everything the router needs to build the engine.
+type Dependencies struct {
+	Config *config.Config
+	Logger *zap.Logger
+	DB     *database.Postgres
+	Redis  *cache.Redis
+}
 
-	mux.HandleFunc("/version", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte("{\"name\":\"RedIntel Sentinel\",\"version\":\"0.1.0\"}"))
-	})
+// New constructs a fully configured Gin engine.
+func New(deps Dependencies) *gin.Engine {
+	if deps.Config.IsProduction() {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
-	return mux
+	engine := gin.New()
+	engine.RedirectTrailingSlash = false
+
+	// Global middleware, ordered: correlation ID -> logging -> recovery.
+	engine.Use(middleware.RequestID())
+	engine.Use(middleware.Logger(deps.Logger))
+	engine.Use(middleware.Recovery(deps.Logger))
+
+	health := handlers.NewHealthHandler(deps.DB, deps.Redis)
+	ver := handlers.NewVersionHandler()
+
+	// Operational / probe endpoints (root level for orchestrators like k8s).
+	engine.GET("/health", health.Health)
+	engine.GET("/healthz", health.Health)
+	engine.GET("/ready", health.Ready)
+	engine.GET("/readyz", health.Ready)
+	engine.GET("/version", ver.Version)
+
+	// Versioned API surface. Feature modules (assets, projects, scans, ...)
+	// will register their routes under this group in later phases.
+	v1 := engine.Group("/api/v1")
+	{
+		v1.GET("/health", health.Health)
+		v1.GET("/ready", health.Ready)
+		v1.GET("/version", ver.Version)
+	}
+
+	return engine
 }
