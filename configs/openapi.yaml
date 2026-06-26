@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: RedIntel Sentinel API
+  description: >
+    Enterprise Attack Surface Management (ASM) platform for authorized,
+    defensive security assessments. Core platform API: authentication, RBAC,
+    organizations, teams, invitations, projects and audit logging.
+  version: "1.0.0"
+servers:
+  - url: /api/v1
+    description: API v1
+tags:
+  - name: Auth
+  - name: API Keys
+  - name: Organizations
+  - name: Members
+  - name: Teams
+  - name: Invitations
+  - name: Projects
+  - name: Audit
+  - name: Admin
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+    Credentials:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        full_name: { type: string }
+    TokenPair:
+      type: object
+      properties:
+        access_token: { type: string }
+        refresh_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        expires_at: { type: string, format: date-time }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        full_name: { type: string }
+        is_active: { type: boolean }
+        is_superadmin: { type: boolean }
+    Role:
+      type: string
+      enum: [admin, manager, analyst, viewer]
+    Organization:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        slug: { type: string }
+    Project:
+      type: object
+      properties:
+        id: { type: string }
+        org_id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        owner_id: { type: string }
+        status: { type: string, enum: [active, archived] }
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201': { description: Created }
+        '409': { description: Email already registered }
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Credentials' }
+      responses:
+        '200': { description: OK }
+        '401': { description: Invalid credentials }
+        '429': { description: Too many attempts }
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Rotate refresh token
+      security: []
+      responses: { '200': { description: OK } }
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke refresh token
+      responses: { '200': { description: OK } }
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      responses: { '200': { description: OK } }
+    put:
+      tags: [Auth]
+      summary: Update profile
+      responses: { '200': { description: OK } }
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password
+      responses: { '200': { description: OK } }
+  /auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request a password reset
+      security: []
+      responses: { '200': { description: OK } }
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password with token
+      security: []
+      responses: { '200': { description: OK } }
+  /auth/api-keys:
+    get:
+      tags: [API Keys]
+      summary: List API keys
+      responses: { '200': { description: OK } }
+    post:
+      tags: [API Keys]
+      summary: Create API key (secret shown once)
+      responses: { '201': { description: Created } }
+  /auth/api-keys/{id}:
+    delete:
+      tags: [API Keys]
+      summary: Revoke API key
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: OK } }
+  /invitations/accept:
+    post:
+      tags: [Invitations]
+      summary: Accept an organization invitation
+      responses: { '200': { description: OK } }
+  /orgs:
+    get:
+      tags: [Organizations]
+      summary: List my organizations
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      responses: { '201': { description: Created } }
+  /orgs/{orgID}:
+    get:
+      tags: [Organizations]
+      summary: Get organization
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+    put:
+      tags: [Organizations]
+      summary: Update organization (admin)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+    delete:
+      tags: [Organizations]
+      summary: Delete organization (admin)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /orgs/{orgID}/members:
+    get:
+      tags: [Members]
+      summary: List members
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+    put:
+      tags: [Members]
+      summary: Set member role (admin)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /orgs/{orgID}/members/{userID}:
+    delete:
+      tags: [Members]
+      summary: Remove member (admin)
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: userID, in: path, required: true, schema: { type: string } }
+      responses: { '200': { description: OK } }
+  /orgs/{orgID}/teams:
+    get:
+      tags: [Teams]
+      summary: List teams
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Teams]
+      summary: Create team (manager)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '201': { description: Created } }
+  /orgs/{orgID}/teams/{teamID}:
+    get: { tags: [Teams], summary: Get team, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: teamID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    put: { tags: [Teams], summary: Update team (manager), parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: teamID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    delete: { tags: [Teams], summary: Delete team (manager), parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: teamID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+  /orgs/{orgID}/teams/{teamID}/members:
+    get: { tags: [Teams], summary: List team members, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: teamID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    post: { tags: [Teams], summary: Add team member (manager), parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: teamID, in: path, required: true, schema: { type: string } }], responses: { '201': { description: Created } } }
+  /orgs/{orgID}/invitations:
+    get:
+      tags: [Invitations]
+      summary: List invitations (manager)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Invitations]
+      summary: Create invitation (admin)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '201': { description: Created } }
+  /orgs/{orgID}/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Projects]
+      summary: Create project (manager)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '201': { description: Created } }
+  /orgs/{orgID}/projects/{projectID}:
+    get: { tags: [Projects], summary: Get project, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    put: { tags: [Projects], summary: Update project, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    delete: { tags: [Projects], summary: Delete project, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+  /orgs/{orgID}/projects/{projectID}/members:
+    get: { tags: [Projects], summary: List project members, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    post: { tags: [Projects], summary: Add project member, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }], responses: { '201': { description: Created } } }
+  /orgs/{orgID}/audit-logs:
+    get:
+      tags: [Audit]
+      summary: List org audit logs (manager)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users (superadmin)
+      responses: { '200': { description: OK } }
+  /admin/audit-logs:
+    get:
+      tags: [Admin]
+      summary: List all audit logs (superadmin)
+      responses: { '200': { description: OK } }
