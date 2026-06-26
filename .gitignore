@@ -33,3 +33,9 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
