@@ -24,7 +24,20 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 	Log      LogConfig      `mapstructure:"log"`
+}
+
+// AuthConfig holds authentication and token settings.
+type AuthConfig struct {
+	JWTSecret        string        `mapstructure:"jwt_secret"`
+	AccessTokenTTL   time.Duration `mapstructure:"access_token_ttl"`
+	RefreshTokenTTL  time.Duration `mapstructure:"refresh_token_ttl"`
+	PasswordResetTTL time.Duration `mapstructure:"password_reset_ttl"`
+	InvitationTTL    time.Duration `mapstructure:"invitation_ttl"`
+	BcryptCost       int           `mapstructure:"bcrypt_cost"`
+	AdminEmail       string        `mapstructure:"admin_email"`
+	AdminPassword    string        `mapstructure:"admin_password"`
 }
 
 // AppConfig holds top-level application metadata.
@@ -150,6 +163,12 @@ func (c *Config) validate() error {
 	default:
 		return fmt.Errorf("log.level %q is invalid", c.Log.Level)
 	}
+	if c.Auth.JWTSecret == "" {
+		return fmt.Errorf("auth.jwt_secret is required")
+	}
+	if c.IsProduction() && strings.HasPrefix(c.Auth.JWTSecret, "dev-insecure") {
+		return fmt.Errorf("auth.jwt_secret must be set to a strong value in production")
+	}
 	return nil
 }
 
@@ -182,4 +201,13 @@ func setDefaults(v *viper.Viper) {
 
 	v.SetDefault("log.level", "info")
 	v.SetDefault("log.format", "json")
+
+	v.SetDefault("auth.jwt_secret", "dev-insecure-change-me-please-0123456789abcdef")
+	v.SetDefault("auth.access_token_ttl", "15m")
+	v.SetDefault("auth.refresh_token_ttl", "168h")
+	v.SetDefault("auth.password_reset_ttl", "1h")
+	v.SetDefault("auth.invitation_ttl", "168h")
+	v.SetDefault("auth.bcrypt_cost", 12)
+	v.SetDefault("auth.admin_email", "admin@redintel.local")
+	v.SetDefault("auth.admin_password", "ChangeMe123!")
 }
