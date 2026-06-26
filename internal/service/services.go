@@ -18,6 +18,9 @@ type Services struct {
 	Invitation *InvitationService
 	Project    *ProjectService
 	Audit      *AuditService
+	Asset      *AssetService
+	Dashboard  *DashboardService
+	Report     *ReportService
 }
 
 // New constructs the service set.
@@ -31,5 +34,8 @@ func New(repos *repository.Repositories, jwt *auth.JWTManager, redis *cache.Redi
 		Invitation: &InvitationService{repos: repos, cfg: cfg, audit: audit, log: log},
 		Project:    &ProjectService{repos: repos, audit: audit},
 		Audit:      audit,
+		Asset:      &AssetService{repos: repos, audit: audit},
+		Dashboard:  &DashboardService{repos: repos},
+		Report:     &ReportService{repos: repos},
 	}
 }

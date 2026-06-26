@@ -129,6 +129,20 @@ func registerOrgRoutes(v1 *gin.RouterGroup, api *handlers.API, authn gin.Handler
 	o.POST("/projects/:projectID/members", middleware.RequireOrgRole(models.RoleAnalyst), api.AddProjectMember)
 	o.DELETE("/projects/:projectID/members/:userID", middleware.RequireOrgRole(models.RoleAnalyst), api.RemoveProjectMember)
 
+	o.POST("/projects/:projectID/archive", middleware.RequireOrgRole(models.RoleAnalyst), api.ArchiveProject)
+	o.POST("/projects/:projectID/unarchive", middleware.RequireOrgRole(models.RoleAnalyst), api.UnarchiveProject)
+	o.GET("/projects/:projectID/report", middleware.RequireOrgRole(models.RoleViewer), api.GenerateReport)
+
+	// Asset inventory (Phase 5).
+	o.GET("/projects/:projectID/assets", middleware.RequireOrgRole(models.RoleViewer), api.ListAssets)
+	o.POST("/projects/:projectID/assets", middleware.RequireOrgRole(models.RoleAnalyst), api.CreateAsset)
+	o.GET("/projects/:projectID/assets/:assetID", middleware.RequireOrgRole(models.RoleViewer), api.GetAsset)
+	o.PUT("/projects/:projectID/assets/:assetID", middleware.RequireOrgRole(models.RoleAnalyst), api.UpdateAsset)
+	o.DELETE("/projects/:projectID/assets/:assetID", middleware.RequireOrgRole(models.RoleAnalyst), api.DeleteAsset)
+
+	// Dashboard (Phase 6).
+	o.GET("/dashboard", middleware.RequireOrgRole(models.RoleViewer), api.Dashboard)
+
 	o.GET("/audit-logs", middleware.RequireOrgRole(models.RoleManager), api.ListOrgAuditLogs)
 }
 
