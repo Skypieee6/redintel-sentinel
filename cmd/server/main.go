@@ -1,21 +1,12 @@
+// Package main is the entrypoint for the RedIntel Sentinel platform.
+//
+// RedIntel Sentinel is an enterprise Attack Surface Management (ASM) platform
+// intended strictly for authorized, defensive security assessments. The binary
+// is a thin wrapper around the Cobra-powered CLI defined in internal/cli.
 package main
 
-import (
-	"log"
-	"net/http"
-)
+import "github.com/Skypieee6/redintel-sentinel/internal/cli"
 
 func main() {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"status":"ok","service":"redintel-sentinel"}`))
-	})
-
-	log.Println("RedIntel Sentinel starting on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
-		log.Fatal(err)
-	}
+	cli.Execute()
 }
