@@ -91,3 +91,25 @@ The foundation deliberately exposes an empty `/api/v1` group. Subsequent phases
 add feature modules (authentication, projects, asset inventory, passive
 discovery, reporting) as self-contained packages registering their routes onto
 that group.
+
+## Core platform (implemented)
+
+Layered as handlers -> services -> repositories -> PostgreSQL:
+
+- **Authentication**: registration, login, JWT access tokens, rotating opaque
+  refresh tokens (stored hashed), logout, change-password, password reset
+  (hashed, expiring tokens), and per-user API keys (`X-API-Key`, hashed,
+  shown once). bcrypt password hashing. Redis-backed login brute-force lockout.
+- **RBAC**: org-scoped roles `admin > manager > analyst > viewer`, plus a
+  platform `superadmin`. Enforced via `OrgContext` + `RequireOrgRole`
+  middleware.
+- **Organizations**: orgs, memberships, teams, team members, and email
+  invitations (accept via hashed token).
+- **Projects**: CRUD with ownership and access controls (org role, ownership,
+  or explicit project membership) and project members.
+- **Audit logging**: authentication, organization, project and user events,
+  queryable per-org (manager+) and platform-wide (superadmin).
+- **API & docs**: REST under `/api/v1`; OpenAPI 3 spec at
+  `/api/v1/openapi.yaml` with Swagger UI at `/docs`.
+- **Testing**: unit tests (auth primitives, models, config) and an end-to-end
+  integration test exercising the full HTTP stack against Postgres + Redis.

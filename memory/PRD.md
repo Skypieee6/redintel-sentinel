@@ -1,49 +1,49 @@
 # RedIntel Sentinel — PRD
 
 ## Problem statement
-Transform the repository into a production-grade enterprise **Attack Surface
-Management (ASM)** platform for **authorized, defensive** security assessments.
-No offensive functionality. Deliver the backend foundation.
+Production-grade enterprise **Attack Surface Management (ASM)** platform for
+**authorized, defensive** security assessments. No offensive functionality.
 
 ## Tech stack
 Go 1.25 · Gin · Viper · Zap · Cobra · PostgreSQL (pgx/v5) · Redis (go-redis/v9)
-· golang-migrate · Docker / docker-compose · GitHub Actions.
+· golang-migrate · golang-jwt · bcrypt · Docker / docker-compose · GitHub Actions.
 
-## Architecture (implemented)
-```
-cmd/server        entrypoint -> internal/cli
-internal/app      bootstrap & dependency wiring
-internal/cli      Cobra commands: serve, migrate, version
-internal/config   Viper layered config (defaults -> yaml -> env) + validation
-internal/logger   Zap structured logger
-internal/version  build metadata via -ldflags
-internal/database PostgreSQL pgx pool
-internal/cache    Redis client
-internal/handlers health, ready, version
-internal/middleware request-id, zap logging, recovery
-internal/router   Gin engine + routes (/health /ready /version + /api/v1)
-internal/server   HTTP server + graceful shutdown
-pkg/response      JSON envelope helpers
-migrations        golang-migrate SQL (0001 baseline)
-configs           default config.yaml
-.github/workflows CI pipeline
-Dockerfile / docker-compose.yml / Makefile
-```
+## Architecture
+Layered: `cmd/server` -> `internal/cli` -> `internal/app` (wiring) ->
+`internal/router` (Gin) -> `internal/middleware` -> `internal/handlers` ->
+`internal/service` -> `internal/repository` -> PostgreSQL. Cross-cutting:
+`internal/config`, `internal/logger`, `internal/auth`, `internal/models`,
+`internal/database`, `internal/cache`, `internal/version`, `pkg/response`.
 
-## Implemented (2026-06-26)
-- Foundation complete: config, logging, DB+Redis pools, Gin router, middleware,
-  graceful shutdown, Cobra CLI, migrations, Docker, CI, Makefile.
-- Endpoints verified live: `/health` 200, `/ready` (postgres+redis ok) 200,
-  `/version` build info; SIGTERM graceful shutdown confirmed clean.
-- `go vet`, `gofmt`, config unit tests all pass. 19 logical commits.
+## Implemented
+### Phase 0 — Foundation (2026-06-26)
+Config, logging, DB+Redis pools, Gin router, middleware, graceful shutdown,
+Cobra CLI (serve/migrate/version), migrations, Docker, CI, Makefile.
+Endpoints: `/health`, `/ready`, `/version`.
+
+### Phase 1 — Core platform (2026-06-26)
+- Auth: register, login, JWT access + rotating hashed refresh tokens, logout,
+  change/reset password, API keys (hashed, shown once), bcrypt, Redis brute-force lockout.
+- RBAC: org roles admin/manager/analyst/viewer + platform superadmin (middleware-enforced).
+- Organizations: orgs, memberships, teams, team members, email invitations.
+- Projects: CRUD with ownership + access control, project members.
+- Audit logging: auth/org/project/user events; per-org and platform-wide queries.
+- API: REST under `/api/v1`; OpenAPI 3 at `/api/v1/openapi.yaml`; Swagger UI at `/docs`.
+- Admin superadmin auto-seeded from env (idempotent).
+- Tests: unit (auth, models, config) + full end-to-end HTTP integration test. All pass.
+
+Verification: `go vet` + `gofmt` clean; `go test ./...` green (incl. integration
+against live Postgres+Redis); live curl smoke tests for login/org/project/invite/audit/docs.
 
 ## Backlog (next phases)
-- P0: Authentication (JWT) + RBAC; organizations/users schema.
-- P1: Projects & asset inventory CRUD; passive asset discovery; HTTP fingerprinting.
-- P1: OpenAPI/Swagger docs; rate limiting; structured error catalog.
-- P2: Scheduling, notifications, reporting, plugin SDK, distributed workers.
-- Tests: handler/integration tests with testcontainers; golangci-lint in CI.
+- P1: Asset inventory CRUD; passive asset discovery; HTTP fingerprinting (defensive).
+- P1: Email delivery for invitations/resets (currently logged); golangci-lint in CI; rate limiting.
+- P2: Scheduling, notifications, reporting, plugin SDK, distributed workers, AI-assisted reporting.
+- Frontend: React + TypeScript dashboard.
 
 ## Notes
-- App listens on :8080 by default (configurable via REDINTEL_SERVER_PORT).
-- Docker not installed in the build sandbox; Dockerfile/compose validated by review, build to be run in CI / target host.
+- App default port 8080 (8080 occupied by platform proxy in this sandbox; run on
+  another port for local smoke tests). Run migrations: `go run ./cmd/server migrate up`.
+- The Emergent testing_agent / managed deploy target the standard React/FastAPI/Mongo
+  stack; this Go+Postgres+Redis service is validated via its Go integration test suite
+  and deploys via Docker/container hosts (see support guidance in chat).
