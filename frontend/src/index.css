@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-ink-950 text-zinc-100 font-sans antialiased;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #090a0b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+.font-heading {
+  font-family: 'Cabinet Grotesk', 'IBM Plex Sans', system-ui, sans-serif;
+}
