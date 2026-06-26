@@ -1,0 +1,33 @@
+app:
+  name: redintel-sentinel
+  environment: development
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  read_timeout: 15s
+  write_timeout: 15s
+  idle_timeout: 60s
+  shutdown_timeout: 15s
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  name: redintel
+  sslmode: disable
+  max_conns: 10
+  min_conns: 2
+  max_conn_lifetime: 1h
+  connect_timeout: 5s
+
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+
+log:
+  level: info
+  format: json
