@@ -59,6 +59,13 @@ func (r *ProjectRepository) Update(ctx context.Context, orgID, id, name, descrip
 		 WHERE id = $1 AND org_id = $2 RETURNING `+projColumns, id, orgID, name, description, status))
 }
 
+// SetStatus updates a project's status (e.g. active/archived).
+func (r *ProjectRepository) SetStatus(ctx context.Context, orgID, id, status string) (*models.Project, error) {
+	return scanProject(r.pool.QueryRow(ctx,
+		`UPDATE projects SET status = $3, updated_at = now()
+		 WHERE id = $1 AND org_id = $2 RETURNING `+projColumns, id, orgID, status))
+}
+
 // Delete removes a project.
 func (r *ProjectRepository) Delete(ctx context.Context, orgID, id string) error {
 	tag, err := r.pool.Exec(ctx, `DELETE FROM projects WHERE id = $1 AND org_id = $2`, id, orgID)

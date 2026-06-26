@@ -147,6 +147,28 @@ func (s *ProjectService) RemoveMember(ctx context.Context, actorID, orgID, proje
 	return nil
 }
 
+// SetArchived archives or restores a project; requires manager+ or ownership.
+func (s *ProjectService) SetArchived(ctx context.Context, actorID, orgID, id string, orgRole models.Role, archived bool, ip string) (*models.Project, error) {
+	p, err := s.repos.Projects.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, mapRepoErr(err, "project")
+	}
+	if !s.canManage(ctx, p, actorID, orgRole) {
+		return nil, wrap(ErrForbidden, "you do not have permission to modify this project")
+	}
+	status := "active"
+	action := "project.unarchived"
+	if archived {
+		status, action = "archived", "project.archived"
+	}
+	updated, err := s.repos.Projects.SetStatus(ctx, orgID, id, status)
+	if err != nil {
+		return nil, mapRepoErr(err, "project")
+	}
+	s.audit.Record(ctx, action, actorID, orgID, "project", id, ip, nil)
+	return updated, nil
+}
+
 // ListMembers lists explicit members of a project.
 func (s *ProjectService) ListMembers(ctx context.Context, orgID, projectID string) ([]models.ProjectMember, error) {
 	if _, err := s.repos.Projects.Get(ctx, orgID, projectID); err != nil {
