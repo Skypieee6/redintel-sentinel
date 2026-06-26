@@ -41,6 +41,8 @@ type Repositories struct {
 	Invitations *InvitationRepository
 	Projects    *ProjectRepository
 	Audit       *AuditRepository
+	Assets      *AssetRepository
+	Dashboard   *DashboardRepository
 }
 
 // New builds the repository set bound to a pgx pool.
@@ -55,5 +57,7 @@ func New(pool *pgxpool.Pool) *Repositories {
 		Invitations: &InvitationRepository{pool: pool},
 		Projects:    &ProjectRepository{pool: pool},
 		Audit:       &AuditRepository{pool: pool},
+		Assets:      &AssetRepository{pool: pool},
+		Dashboard:   &DashboardRepository{pool: pool},
 	}
 }
