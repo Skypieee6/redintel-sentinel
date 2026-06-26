@@ -17,6 +17,9 @@ tags:
   - name: Teams
   - name: Invitations
   - name: Projects
+  - name: Assets
+  - name: Dashboard
+  - name: Reporting
   - name: Audit
   - name: Admin
 components:
@@ -268,6 +271,58 @@ paths:
     get:
       tags: [Audit]
       summary: List org audit logs (manager)
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /orgs/{orgID}/projects/{projectID}/assets:
+    get:
+      tags: [Assets]
+      summary: List assets (filter via type, q, tag, status, limit, offset)
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: projectID, in: path, required: true, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: tag, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses: { '200': { description: OK } }
+    post:
+      tags: [Assets]
+      summary: Create asset (analyst+)
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: projectID, in: path, required: true, schema: { type: string } }
+      responses: { '201': { description: Created } }
+  /orgs/{orgID}/projects/{projectID}/assets/{assetID}:
+    get: { tags: [Assets], summary: Get asset, parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }, { name: assetID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    put: { tags: [Assets], summary: Update asset (analyst+), parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }, { name: assetID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+    delete: { tags: [Assets], summary: Delete asset (analyst+), parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }, { name: assetID, in: path, required: true, schema: { type: string } }], responses: { '200': { description: OK } } }
+  /orgs/{orgID}/projects/{projectID}/archive:
+    post:
+      tags: [Projects]
+      summary: Archive a project
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /orgs/{orgID}/projects/{projectID}/unarchive:
+    post:
+      tags: [Projects]
+      summary: Restore an archived project
+      parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }, { name: projectID, in: path, required: true, schema: { type: string } }]
+      responses: { '200': { description: OK } }
+  /orgs/{orgID}/projects/{projectID}/report:
+    get:
+      tags: [Reporting]
+      summary: Export asset inventory report
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: projectID, in: path, required: true, schema: { type: string } }
+        - { name: format, in: query, schema: { type: string, enum: [json, csv, markdown, html] } }
+      responses: { '200': { description: Report file } }
+  /orgs/{orgID}/dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Organization ASM dashboard (totals, by-type, recent changes, project & team stats)
       parameters: [{ name: orgID, in: path, required: true, schema: { type: string } }]
       responses: { '200': { description: OK } }
   /admin/users:
