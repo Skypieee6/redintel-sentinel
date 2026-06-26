@@ -1,0 +1,110 @@
+{
+  "theme": "Dark Mode",
+  "archetype": "Archetype 4 (Swiss & High-Contrast)",
+  "rationale": "Enterprise Security and Attack Surface Management (ASM) platforms require a trustworthy, authoritative, precise 'control room' feel. We chose a high-contrast dark theme with sharp, technical geometry to reduce eye strain for SOC analysts monitoring threats for extended periods.",
+  "colors": {
+    "background": {
+      "primary": "#090A0B",
+      "secondary": "#18181B",
+      "tertiary": "#27272A"
+    },
+    "text": {
+      "primary": "#FAFAFA",
+      "secondary": "#A1A1AA",
+      "tertiary": "#71717A"
+    },
+    "brand": {
+      "primary": "#3B82F6",
+      "hover": "#2563EB",
+      "muted": "rgba(59, 130, 246, 0.2)"
+    },
+    "status": {
+      "critical": "#EF4444",
+      "warning": "#F59E0B",
+      "healthy": "#10B981",
+      "info": "#3B82F6"
+    },
+    "borders": {
+      "default": "#27272A",
+      "focus": "#3B82F6",
+      "critical": "rgba(239, 68, 68, 0.5)"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "Cabinet Grotesk",
+      "body": "IBM Plex Sans",
+      "mono": "JetBrains Mono"
+    },
+    "scales": {
+      "h1": "text-4xl sm:text-5xl tracking-tight font-bold",
+      "h2": "text-2xl sm:text-3xl tracking-tight font-bold",
+      "h3": "text-xl sm:text-2xl tracking-tight font-semibold",
+      "h4": "text-lg font-semibold",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm text-zinc-400",
+      "overline": "text-xs uppercase tracking-[0.2em] font-semibold text-zinc-500",
+      "data": "font-mono text-sm"
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "High density for data tables, generous padding for structural containers. 'Control Room' grid layout.",
+    "dashboard_grid": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 or gap-6. Direct children only.",
+    "container_padding": "p-6 or p-8 inside cards, p-4 for dense list items.",
+    "borders": "1px solid border-zinc-800 on all structural elements. Grid borders exposed."
+  },
+  "components": {
+    "cards": {
+      "style": "Flat solid surfaces. No shadow or extreme minimal shadow. bg-zinc-900 border border-zinc-800 rounded-md.",
+      "hover": "hover:border-zinc-700 transition-colors"
+    },
+    "tables": {
+      "density": "High density, small text (text-sm).",
+      "header": "text-xs uppercase tracking-wider text-zinc-400 border-b border-zinc-800",
+      "rows": "hover:bg-zinc-800/50 border-b border-zinc-800/50 transition-colors",
+      "cells": "Whitespace nowrap, use JetBrains Mono for IPs, IDs, and numeric data."
+    },
+    "badges_tags": {
+      "style": "px-2 py-0.5 rounded text-xs font-medium inline-flex items-center gap-1.5",
+      "critical": "bg-red-500/10 text-red-500 border border-red-500/20",
+      "warning": "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+      "healthy": "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+    },
+    "buttons": {
+      "primary": "bg-blue-500 hover:bg-blue-600 text-white rounded-md px-4 py-2 text-sm font-medium transition-all focus:ring-2 focus:ring-blue-500/50",
+      "secondary": "bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border border-zinc-700 rounded-md px-4 py-2 text-sm font-medium transition-all"
+    },
+    "charts": {
+      "library": "Recharts",
+      "style": "Remove cartesian grid lines or make them very faint (stroke='#27272A'). Use solid colors for lines/bars (blue-500, emerald-500, amber-500). Tooltip bg-zinc-900 border-zinc-800.",
+      "responsive": "Wrap in ResponsiveContainer, min-h-[300px]"
+    }
+  },
+  "interactions_and_motion": {
+    "hover": "Subtle background shifts and border color changes. Fast transitions (duration-150 ease-out).",
+    "loading": "Skeleton loaders using animate-pulse bg-zinc-800. For charts: centered spinner or shimmer effect.",
+    "empty_states": "Centered flex container, muted icon (lucide-react), text-zinc-400, clear call-to-action button.",
+    "error_states": "Subtle red border on component, warning icon, user-friendly error text with retry button."
+  },
+  "testing": {
+    "attributes": "MUST include `data-testid` on all interactive elements (buttons, inputs, links, tabs, rows). Kebab-case, role-based."
+  },
+  "media": {
+    "icons_library": "lucide-react",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1526289034009-0240ddb68ce3",
+        "category": "login_background",
+        "description": "Abstract dark building geometric pattern for login/registration split screen background."
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: react-router-dom, @tanstack/react-query, recharts, lucide-react, clsx, tailwind-merge.",
+    "Set up JWT authentication flow with ProtectedRoutes.",
+    "Implement the Dashboard with Recharts and summary cards.",
+    "Implement Asset Inventory with robust filtering, search, and pagination functionality.",
+    "Ensure the entire app uses the Dark Theme colors defined here.",
+    "Use data-testid on all interactive elements."
+  ]
+}
