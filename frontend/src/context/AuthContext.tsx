@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { api, tokenStore } from '@/lib/api';
 import type { User } from '@/lib/types';
 
@@ -39,33 +39,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const { user: u, tokens } = await api.auth.login({ email, password });
     tokenStore.set(tokens);
     setUser(u);
-  };
+  }, []);
 
-  const register = async (email: string, password: string, fullName: string) => {
+  const register = useCallback(async (email: string, password: string, fullName: string) => {
     const { user: u, tokens } = await api.auth.register({ email, password, full_name: fullName });
     tokenStore.set(tokens);
     setUser(u);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.auth.logout();
-    } catch {
-      /* ignore */
+    } catch (e) {
+      // The session is being torn down regardless; surface the failure for
+      // diagnostics rather than swallowing it silently.
+      console.warn('logout request failed; clearing local session anyway', e);
     }
     tokenStore.clear();
     setUser(null);
-  };
+  }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo<AuthState>(
+    () => ({ user, loading, login, register, logout, setUser }),
+    [user, loading, login, register, logout]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

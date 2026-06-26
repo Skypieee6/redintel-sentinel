@@ -20,6 +20,12 @@ const TYPE_COLORS: Record<string, string> = {
   technology: '#84CC16',
 };
 
+const CHART_MARGIN = { top: 8, right: 8, left: -16, bottom: 8 };
+const X_AXIS_LINE = { stroke: '#27272A' };
+const TOOLTIP_CURSOR = { fill: 'rgba(255,255,255,0.04)' };
+const TOOLTIP_CONTENT_STYLE = { background: '#18181B', border: '1px solid #27272A', borderRadius: 8, color: '#FAFAFA' };
+const SKELETON_KEYS = ['stat-1', 'stat-2', 'stat-3', 'stat-4'];
+
 function StatCard({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: React.ReactNode; accent: string }) {
   return (
     <Card className="p-5">
@@ -68,8 +74,8 @@ export default function Dashboard() {
       ) : isLoading ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-28" />
+            {SKELETON_KEYS.map((k) => (
+              <Skeleton key={k} className="h-28" />
             ))}
           </div>
           <Skeleton className="h-80" />
@@ -107,12 +113,12 @@ export default function Dashboard() {
               ) : (
                 <div className="min-h-[300px]" data-testid="assets-by-type-chart">
                   <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={chartData} margin={{ top: 8, right: 8, left: -16, bottom: 8 }}>
-                      <XAxis dataKey="name" stroke="#71717A" fontSize={12} tickLine={false} axisLine={{ stroke: '#27272A' }} />
+                    <BarChart data={chartData} margin={CHART_MARGIN}>
+                      <XAxis dataKey="name" stroke="#71717A" fontSize={12} tickLine={false} axisLine={X_AXIS_LINE} />
                       <YAxis stroke="#71717A" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                       <Tooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                        contentStyle={{ background: '#18181B', border: '1px solid #27272A', borderRadius: 8, color: '#FAFAFA' }}
+                        cursor={TOOLTIP_CURSOR}
+                        contentStyle={TOOLTIP_CONTENT_STYLE}
                       />
                       <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                         {chartData.map((d) => (

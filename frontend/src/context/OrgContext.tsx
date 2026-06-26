@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { Organization } from '@/lib/types';
@@ -31,18 +31,19 @@ export function OrgProvider({ children }: { children: ReactNode }) {
     }
   }, [orgs, activeOrgId]);
 
-  const setActiveOrgId = (id: string) => {
+  const setActiveOrgId = useCallback((id: string) => {
     setActive(id);
     localStorage.setItem(ORG_KEY, id);
-  };
+  }, []);
 
   const activeOrg = orgs.find((o) => o.id === activeOrgId) || null;
 
-  return (
-    <OrgContext.Provider value={{ orgs, activeOrg, activeOrgId, setActiveOrgId, loading: isLoading, refetch }}>
-      {children}
-    </OrgContext.Provider>
+  const value = useMemo<OrgState>(
+    () => ({ orgs, activeOrg, activeOrgId, setActiveOrgId, loading: isLoading, refetch }),
+    [orgs, activeOrg, activeOrgId, setActiveOrgId, isLoading, refetch]
   );
+
+  return <OrgContext.Provider value={value}>{children}</OrgContext.Provider>;
 }
 
 export function useOrg() {

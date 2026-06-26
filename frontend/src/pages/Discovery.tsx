@@ -36,7 +36,7 @@ export default function Discovery() {
     if (!projectId && projects.data && projects.data.length > 0) {
       setProjectId(projects.data[0].id);
     }
-  }, [projects.data, projectId]);
+  }, [projects.data, projectId, setProjectId]);
 
   const jobs = useQuery({
     queryKey: ['discovery', activeOrgId, projectId],
