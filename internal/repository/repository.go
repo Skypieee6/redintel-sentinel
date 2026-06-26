@@ -43,6 +43,7 @@ type Repositories struct {
 	Audit       *AuditRepository
 	Assets      *AssetRepository
 	Dashboard   *DashboardRepository
+	Discovery   *DiscoveryRepository
 }
 
 // New builds the repository set bound to a pgx pool.
@@ -59,5 +60,6 @@ func New(pool *pgxpool.Pool) *Repositories {
 		Audit:       &AuditRepository{pool: pool},
 		Assets:      &AssetRepository{pool: pool},
 		Dashboard:   &DashboardRepository{pool: pool},
+		Discovery:   &DiscoveryRepository{pool: pool},
 	}
 }

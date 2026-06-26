@@ -4,6 +4,9 @@ import type {
   Asset,
   AssetPage,
   DashboardSummary,
+  DiscoveryInputType,
+  DiscoveryJob,
+  DiscoveryJobPage,
   Membership,
   Organization,
   Project,
@@ -206,6 +209,20 @@ export const api = {
     async get(orgId: string) {
       const { data } = await http.get(`/orgs/${orgId}/dashboard`);
       return unwrap<DashboardSummary>(data);
+    },
+  },
+  discovery: {
+    async list(orgId: string, projectId: string, params: { limit?: number; offset?: number } = {}) {
+      const { data } = await http.get(`/orgs/${orgId}/projects/${projectId}/discovery`, { params });
+      return unwrap<DiscoveryJobPage>(data);
+    },
+    async start(orgId: string, projectId: string, payload: { input_type: DiscoveryInputType; input_value: string }) {
+      const { data } = await http.post(`/orgs/${orgId}/projects/${projectId}/discovery`, payload);
+      return unwrap<DiscoveryJob>(data);
+    },
+    async get(orgId: string, projectId: string, jobId: string) {
+      const { data } = await http.get(`/orgs/${orgId}/projects/${projectId}/discovery/${jobId}`);
+      return unwrap<DiscoveryJob>(data);
     },
   },
   reports: {

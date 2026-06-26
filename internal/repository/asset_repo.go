@@ -40,6 +40,38 @@ func (r *AssetRepository) Create(ctx context.Context, a *models.Asset) (*models.
 		a.OrgID, a.ProjectID, string(a.Type), a.Value, tags, attrs))
 }
 
+// Upsert inserts an asset or, if one with the same (project, type, value)
+// already exists, refreshes its last_seen and merges in new attributes. It
+// reports whether the asset was newly created. Used by passive discovery so
+// findings become normal asset records idempotently.
+func (r *AssetRepository) Upsert(ctx context.Context, a *models.Asset) (*models.Asset, bool, error) {
+	attrs := a.Attributes
+	if attrs == nil {
+		attrs = map[string]any{}
+	}
+	tags := a.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+	var asset models.Asset
+	var inserted bool
+	err := r.pool.QueryRow(ctx,
+		`INSERT INTO assets (org_id, project_id, type, value, tags, attributes)
+		 VALUES ($1, $2, $3, $4, $5, $6)
+		 ON CONFLICT (project_id, type, value) DO UPDATE
+		   SET last_seen = now(), updated_at = now(),
+		       attributes = assets.attributes || EXCLUDED.attributes
+		 RETURNING `+assetColumns+`, (xmax = 0) AS inserted`,
+		a.OrgID, a.ProjectID, string(a.Type), a.Value, tags, attrs).Scan(
+		&asset.ID, &asset.OrgID, &asset.ProjectID, &asset.Type, &asset.Value, &asset.Tags,
+		&asset.Attributes, &asset.Status, &asset.FirstSeen, &asset.LastSeen,
+		&asset.CreatedAt, &asset.UpdatedAt, &inserted)
+	if err != nil {
+		return nil, false, mapError(err)
+	}
+	return &asset, inserted, nil
+}
+
 // Get returns an asset scoped to its project.
 func (r *AssetRepository) Get(ctx context.Context, projectID, id string) (*models.Asset, error) {
 	return scanAsset(r.pool.QueryRow(ctx,

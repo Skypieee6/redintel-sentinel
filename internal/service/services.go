@@ -1,11 +1,14 @@
 package service
 
 import (
+	"time"
+
 	"go.uber.org/zap"
 
 	"github.com/Skypieee6/redintel-sentinel/internal/auth"
 	"github.com/Skypieee6/redintel-sentinel/internal/cache"
 	"github.com/Skypieee6/redintel-sentinel/internal/config"
+	"github.com/Skypieee6/redintel-sentinel/internal/discovery"
 	"github.com/Skypieee6/redintel-sentinel/internal/repository"
 )
 
@@ -21,6 +24,7 @@ type Services struct {
 	Asset      *AssetService
 	Dashboard  *DashboardService
 	Report     *ReportService
+	Discovery  *DiscoveryService
 }
 
 // New constructs the service set.
@@ -37,5 +41,12 @@ func New(repos *repository.Repositories, jwt *auth.JWTManager, redis *cache.Redi
 		Asset:      &AssetService{repos: repos, audit: audit},
 		Dashboard:  &DashboardService{repos: repos},
 		Report:     &ReportService{repos: repos},
+		Discovery: &DiscoveryService{
+			repos:   repos,
+			audit:   audit,
+			engine:  discovery.Default(2 * time.Minute),
+			log:     log,
+			timeout: 2 * time.Minute,
+		},
 	}
 }

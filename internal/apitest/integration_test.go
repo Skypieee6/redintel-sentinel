@@ -24,6 +24,15 @@ import (
 // setup builds a router backed by real Postgres + Redis. It skips the test if
 // the datastores are not reachable (e.g. unit-only CI without services).
 func setup(t *testing.T) *gin.Engine {
+	engine, _ := setupServices(t)
+	return engine
+}
+
+// setupServices builds a router backed by real Postgres + Redis and also
+// returns the service set so tests can inject deterministic dependencies (e.g.
+// an offline discovery engine). It skips the test if the datastores are not
+// reachable (e.g. unit-only CI without services).
+func setupServices(t *testing.T) (*gin.Engine, *service.Services) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 
@@ -50,10 +59,11 @@ func setup(t *testing.T) *gin.Engine {
 	cfg.Auth.BcryptCost = 4 // speed up tests
 	services := service.New(repos, jwt, redis, cfg.Auth, zapNop())
 
-	return router.New(router.Dependencies{
+	engine := router.New(router.Dependencies{
 		Config: cfg, Logger: zapNop(), DB: db, Redis: redis,
 		Repos: repos, Services: services, JWT: jwt,
 	})
+	return engine, services
 }
 
 type apiClient struct {

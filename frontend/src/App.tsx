@@ -10,6 +10,8 @@ import Organizations from '@/pages/Organizations';
 import Projects from '@/pages/Projects';
 import AssetInventory from '@/pages/AssetInventory';
 import AssetDetails from '@/pages/AssetDetails';
+import Discovery from '@/pages/Discovery';
+import DiscoveryDetail from '@/pages/DiscoveryDetail';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
 import Profile from '@/pages/Profile';
@@ -34,6 +36,8 @@ export default function App() {
       <Route path="/projects" element={<Shell><Projects /></Shell>} />
       <Route path="/assets" element={<Shell><AssetInventory /></Shell>} />
       <Route path="/assets/:projectId/:assetId" element={<Shell><AssetDetails /></Shell>} />
+      <Route path="/discovery" element={<Shell><Discovery /></Shell>} />
+      <Route path="/discovery/:projectId/:jobId" element={<Shell><DiscoveryDetail /></Shell>} />
       <Route path="/reports" element={<Shell><Reports /></Shell>} />
       <Route path="/settings" element={<Shell><Settings /></Shell>} />
       <Route path="/profile" element={<Shell><Profile /></Shell>} />

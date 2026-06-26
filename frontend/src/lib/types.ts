@@ -115,3 +115,44 @@ export interface APIKey {
   revoked: boolean;
   created_at: string;
 }
+
+export type DiscoveryInputType = 'domain' | 'subdomain' | 'asn' | 'cidr';
+export type DiscoveryStatus = 'pending' | 'running' | 'completed' | 'failed';
+
+export interface DiscoveryResult {
+  id: string;
+  job_id: string;
+  asset_id: string;
+  type: AssetType;
+  value: string;
+  source: string;
+  attributes: Record<string, unknown>;
+  is_new: boolean;
+  created_at: string;
+}
+
+export interface DiscoveryJob {
+  id: string;
+  org_id: string;
+  project_id: string;
+  input_type: DiscoveryInputType;
+  input_value: string;
+  sources: string[] | null;
+  status: DiscoveryStatus;
+  error?: string;
+  assets_found: number;
+  assets_created: number;
+  created_by: string;
+  started_at?: string;
+  completed_at?: string;
+  created_at: string;
+  updated_at: string;
+  results?: DiscoveryResult[];
+}
+
+export interface DiscoveryJobPage {
+  jobs: DiscoveryJob[];
+  total: number;
+  limit: number;
+  offset: number;
+}

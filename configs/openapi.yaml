@@ -18,6 +18,7 @@ tags:
   - name: Invitations
   - name: Projects
   - name: Assets
+  - name: Discovery
   - name: Dashboard
   - name: Reporting
   - name: Audit
@@ -87,6 +88,61 @@ components:
         description: { type: string }
         owner_id: { type: string }
         status: { type: string, enum: [active, archived] }
+    StartDiscoveryRequest:
+      type: object
+      required: [input_type, input_value]
+      properties:
+        input_type:
+          type: string
+          enum: [domain, subdomain, asn, cidr]
+          description: Authorized seed type to enumerate from.
+        input_value:
+          type: string
+          example: example.com
+    DiscoveryResult:
+      type: object
+      properties:
+        id: { type: string }
+        job_id: { type: string }
+        asset_id: { type: string }
+        type:
+          type: string
+          enum: [subdomain, dns_record, certificate]
+        value: { type: string }
+        source: { type: string, example: ct_logs }
+        attributes: { type: object, additionalProperties: true }
+        is_new: { type: boolean }
+        created_at: { type: string, format: date-time }
+    DiscoveryJob:
+      type: object
+      properties:
+        id: { type: string }
+        org_id: { type: string }
+        project_id: { type: string }
+        input_type: { type: string, enum: [domain, subdomain, asn, cidr] }
+        input_value: { type: string }
+        sources: { type: array, items: { type: string } }
+        status: { type: string, enum: [pending, running, completed, failed] }
+        error: { type: string }
+        assets_found: { type: integer }
+        assets_created: { type: integer }
+        created_by: { type: string }
+        started_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveryResult' }
+    DiscoveryJobPage:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items: { $ref: '#/components/schemas/DiscoveryJob' }
+        total: { type: integer }
+        limit: { type: integer }
+        offset: { type: integer }
 security:
   - bearerAuth: []
   - apiKeyAuth: []
@@ -319,6 +375,60 @@ paths:
         - { name: projectID, in: path, required: true, schema: { type: string } }
         - { name: format, in: query, schema: { type: string, enum: [json, csv, markdown, html] } }
       responses: { '200': { description: Report file } }
+  /orgs/{orgID}/projects/{projectID}/discovery:
+    get:
+      tags: [Discovery]
+      summary: List passive discovery jobs (history) for a project (viewer+)
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: projectID, in: path, required: true, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200':
+          description: Paginated discovery job history
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DiscoveryJobPage' }
+    post:
+      tags: [Discovery]
+      summary: Start a passive, defensive discovery job (analyst+)
+      description: >
+        Launches authorized passive reconnaissance (public DNS and Certificate
+        Transparency logs, reverse DNS for CIDR) over the supplied seed. Runs
+        asynchronously; findings are stored as normal asset records. No
+        intrusive scanning is performed.
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: projectID, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StartDiscoveryRequest' }
+      responses:
+        '202':
+          description: Discovery job accepted and queued
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DiscoveryJob' }
+        '400': { description: Invalid input type or value }
+        '403': { description: Analyst role required }
+  /orgs/{orgID}/projects/{projectID}/discovery/{jobID}:
+    get:
+      tags: [Discovery]
+      summary: Get a discovery job and its findings (viewer+)
+      parameters:
+        - { name: orgID, in: path, required: true, schema: { type: string } }
+        - { name: projectID, in: path, required: true, schema: { type: string } }
+        - { name: jobID, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Discovery job with results
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DiscoveryJob' }
+        '404': { description: Job not found }
   /orgs/{orgID}/dashboard:
     get:
       tags: [Dashboard]

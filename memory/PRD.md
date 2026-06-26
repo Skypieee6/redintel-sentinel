@@ -35,6 +35,29 @@ Endpoints: `/health`, `/ready`, `/version`.
 Verification: `go vet` + `gofmt` clean; `go test ./...` green (incl. integration
 against live Postgres+Redis); live curl smoke tests for login/org/project/invite/audit/docs.
 
+### Phase 1 — Passive Asset Discovery (2026-06-26)
+- Isolated `internal/discovery` package: pluggable `Source` engine doing strictly
+  passive, defensive recon — public DNS resolution (A/AAAA/CNAME/MX/NS/TXT),
+  Certificate Transparency logs (crt.sh) for subdomains + certificates, and
+  reverse DNS over authorized CIDRs. No intrusive scanning. Deduplicates findings.
+- Inputs: domain, subdomain, ASN, CIDR. Outputs: subdomains, DNS records, certificates.
+- `discovery_jobs` + `discovery_results` tables (migration 0007). Jobs run
+  asynchronously with pending→running→completed/failed status and asset counts.
+- Findings are persisted as normal `assets` via a new idempotent
+  `AssetRepository.Upsert` (ON CONFLICT refresh + attribute merge; reports new vs known).
+- RBAC: analyst+ to start, viewer+ to read (reuses project-access rules). Audit
+  events: discovery.started / completed / failed.
+- API: `POST/GET /orgs/:orgID/projects/:projectID/discovery` (start + history),
+  `GET .../discovery/:jobID` (job + findings). OpenAPI updated with schemas.
+- Engine injected via `DiscoveryService.SetEngine` for deterministic offline tests.
+- Tests: discovery engine unit tests (aggregation, dedupe, partial-failure tolerance,
+  normalization) + full integration test (start → poll → assets created → history →
+  idempotent re-run). `apitest.TestMain` now applies migrations so CI provisions the
+  schema. `gofmt -s` / `go vet` / `go build` / `go test -race` all green from a fresh DB.
+- Frontend: Discovery page (start workflow + live-polling history table),
+  Discovery detail page (status, stats, results grouped by type, links to assets),
+  status badges, error handling. New nav entry + routes. `tsc` + `vite build` clean.
+
 ### Phase 5–7 — Asset Inventory, Dashboard & Reporting (2026-06-26)
 - Assets: unified `assets` table (domain, subdomain, ip, cidr, asn, dns_record,
   certificate, technology) with JSONB attributes + `text[]` tags. Full CRUD,
@@ -51,10 +74,11 @@ against live Postgres+Redis); live curl smoke tests for login/org/project/invite
   breakdown, all report content-types).
 
 ## Backlog (next phases)
-- P1: Asset inventory CRUD; passive asset discovery; HTTP fingerprinting (defensive).
+- P1: HTTP fingerprinting (defensive); ASN→prefix expansion source for discovery
+  (currently ASN seeds resolve via CIDR/reverse-DNS only, no BGP lookup).
 - P1: Email delivery for invitations/resets (currently logged); golangci-lint in CI; rate limiting.
-- P2: Scheduling, notifications, reporting, plugin SDK, distributed workers, AI-assisted reporting.
-- Frontend: React + TypeScript dashboard.
+- P1: Discovery scheduling (recurring jobs) + graceful drain of in-flight jobs on shutdown.
+- P2: Scheduling, notifications, plugin SDK, distributed workers, AI-assisted reporting.
 
 ## Notes
 - App default port 8080 (8080 occupied by platform proxy in this sandbox; run on

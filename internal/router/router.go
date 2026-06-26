@@ -140,6 +140,11 @@ func registerOrgRoutes(v1 *gin.RouterGroup, api *handlers.API, authn gin.Handler
 	o.PUT("/projects/:projectID/assets/:assetID", middleware.RequireOrgRole(models.RoleAnalyst), api.UpdateAsset)
 	o.DELETE("/projects/:projectID/assets/:assetID", middleware.RequireOrgRole(models.RoleAnalyst), api.DeleteAsset)
 
+	// Passive asset discovery (Phase 1).
+	o.GET("/projects/:projectID/discovery", middleware.RequireOrgRole(models.RoleViewer), api.ListDiscoveryJobs)
+	o.POST("/projects/:projectID/discovery", middleware.RequireOrgRole(models.RoleAnalyst), api.StartDiscovery)
+	o.GET("/projects/:projectID/discovery/:jobID", middleware.RequireOrgRole(models.RoleViewer), api.GetDiscoveryJob)
+
 	// Dashboard (Phase 6).
 	o.GET("/dashboard", middleware.RequireOrgRole(models.RoleViewer), api.Dashboard)
 
